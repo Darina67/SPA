@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { computed } from 'vue'
+import TodoModal from './components/TodoModal.vue' // или относительный импорт
 import { useTasks } from './composables/useTasks' // если alias '@' настроен
 // если alias ещё не настроен, используй: '../../composables/useTasks'
 
@@ -15,8 +16,9 @@ const openModal = () => {
   isModalOpen.value = true
 }
 
-const closeModal = () => {
-  isModalOpen.value = false
+const addTask = (title: string) => {
+  console.log('Новая задача:', title)
+  // здесь потом прикрутим taskService.createTask()
 }
 </script>
 
@@ -88,42 +90,6 @@ const closeModal = () => {
     </button>
 
     <!-- модалка пока оставляем как есть -->
-    <transition name="fade">
-      <section
-        v-if="isModalOpen"
-        class="todo-modal"
-        role="dialog"
-        aria-modal="true"
-        aria-labelledby="todo-modal-title"
-      >
-        <div class="todo-modal__content">
-          <button
-            @click="closeModal"
-            type="button"
-            class="todo-modal__close"
-            aria-label="Закрыть окно добавления задачи"
-          >
-            &times;
-          </button>
-
-          <h2 id="todo-modal-title" class="todo-modal__title">
-            Добавить новую задачу
-          </h2>
-
-          <label class="todo-modal__field">
-            <span class="visually-hidden">Текст задачи</span>
-            <input
-              type="text"
-              class="todo-modal__input"
-              placeholder="Введите текст задачи"
-            />
-          </label>
-
-          <button type="button" class="todo-modal__submit">
-            Добавить задачу
-          </button>
-        </div>
-      </section>
-    </transition>
+    <TodoModal v-model="isModalOpen" @submit="addTask" />
   </main>
 </template>
