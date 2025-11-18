@@ -1,17 +1,19 @@
 <script setup lang="ts">
-import { ref, watch, onMounted, onBeforeUnmount } from 'vue'
+import { ref, watch, onBeforeUnmount } from 'vue'
 
 interface Props {
   modelValue: boolean
 }
 
 const props = defineProps<Props>()
+
 const emit = defineEmits<{
   (e: 'update:modelValue', value: boolean): void
-  (e: 'submit', title: string): void
+  (e: 'submit', payload: { title: string; description: string }): void
 }>()
 
-const inputValue = ref('')
+const title = ref('')
+const description = ref('')
 
 // Закрытие модалки
 const close = () => {
@@ -20,9 +22,15 @@ const close = () => {
 
 // Сабмит
 const submit = () => {
-  if (!inputValue.value.trim()) return
-  emit('submit', inputValue.value.trim())
-  inputValue.value = ''
+  if (!title.value.trim()) return
+
+  emit('submit', {
+    title: title.value.trim(),
+    description: description.value.trim(),
+  })
+
+  title.value = ''
+  description.value = ''
   close()
 }
 
@@ -84,6 +92,15 @@ onBeforeUnmount(() => {
             @keyup.enter="submit"
           />
         </label>
+        <label class="todo-modal__field">
+          <span class="visually-hidden">Описание задачи</span>
+          <textarea
+            class="todo-modal__textarea"
+            placeholder="Введите описание задачи..."
+            rows="4"
+            v-model="description"
+          ></textarea>
+        </label>
 
         <button type="button" class="todo-modal__submit" @click="submit">
           Добавить задачу
@@ -92,58 +109,3 @@ onBeforeUnmount(() => {
     </section>
   </transition>
 </template>
-
-<style scoped lang="scss">
-.todo-modal {
-  position: fixed;
-  inset: 0;
-  z-index: 999;
-  display: grid;
-  place-items: center;
-}
-
-.todo-modal__overlay {
-  position: absolute;
-  inset: 0;
-  background: rgba(0, 0, 0, 0.55);
-}
-
-.todo-modal__content {
-  position: relative;
-  z-index: 2;
-  width: 100%;
-  max-width: 400px;
-  background: #2c2c2c;
-  padding: 24px;
-  border-radius: 10px;
-  box-sizing: border-box;
-}
-
-.todo-modal__close {
-  position: absolute;
-  right: 12px;
-  top: 12px;
-  font-size: 26px;
-  background: none;
-  border: none;
-  color: white;
-  cursor: pointer;
-}
-
-.fade-enter-from,
-.fade-leave-to {
-  opacity: 0;
-  transform: scale(0.92);
-}
-
-.fade-enter-active,
-.fade-leave-active {
-  transition: opacity 0.25s ease, transform 0.25s ease;
-}
-
-.fade-enter-to,
-.fade-leave-from {
-  opacity: 1;
-  transform: scale(1);
-}
-</style>

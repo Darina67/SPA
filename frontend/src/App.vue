@@ -1,10 +1,9 @@
 <script setup lang="ts">
 import { computed } from 'vue'
-import TodoModal from './components/TodoModal.vue' // или относительный импорт
-import { useTasks } from './composables/useTasks' // если alias '@' настроен
-// если alias ещё не настроен, используй: '../../composables/useTasks'
+import TodoModal from './components/TodoModal.vue'
+import { useTasks } from './composables/useTasks'
 
-const { tasks, isLoading, error } = useTasks()
+const { tasks, isLoading, error, deleteTask } = useTasks()
 
 const hasTasks = computed(() => tasks.value.length > 0)
 
@@ -18,7 +17,6 @@ const openModal = () => {
 
 const addTask = (title: string) => {
   console.log('Новая задача:', title)
-  // здесь потом прикрутим taskService.createTask()
 }
 </script>
 
@@ -72,6 +70,7 @@ const addTask = (title: string) => {
               type="button"
               class="todo__btn todo__btn--delete"
               aria-label="Удалить задачу"
+              @click="deleteTask(task.id)"
             >
               ✘
             </button>
@@ -88,8 +87,6 @@ const addTask = (title: string) => {
     >
       +
     </button>
-
-    <!-- модалка пока оставляем как есть -->
     <TodoModal v-model="isModalOpen" @submit="addTask" />
   </main>
 </template>

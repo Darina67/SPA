@@ -20,6 +20,16 @@ export const useTasks = () => {
       isLoading.value = false
     }
   }
+  const deleteTask = async (id: number) => {
+    try {
+      tasks.value = tasks.value.filter((task) => task.id !== id)
+      await taskService.deleteTask(id)
+    } catch (err) {
+      console.error(err)
+      error.value = 'Не удалось удалить задачу'
+      await loadTasks()
+    }
+  }
 
   onMounted(loadTasks)
 
@@ -28,5 +38,6 @@ export const useTasks = () => {
     isLoading,
     error,
     loadTasks,
+    deleteTask,
   }
 }
