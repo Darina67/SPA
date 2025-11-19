@@ -1,22 +1,55 @@
 <script setup lang="ts">
-import { computed } from 'vue'
+import { computed, ref } from 'vue'
 import TodoModal from './components/TodoModal.vue'
 import { useTasks } from './composables/useTasks'
+import type { ITask } from './types/task'
 
-const { tasks, isLoading, error, deleteTask } = useTasks()
+// Подключаем логику задач
+const {
+  tasks,
+  isLoading,
+  error,
+  deleteTask,
+  toggleTaskStatus,
+  createTask,
+  updateTask,
+} = useTasks()
 
+// Состояния
 const hasTasks = computed(() => tasks.value.length > 0)
-
-import { ref } from 'vue'
-
 const isModalOpen = ref(false)
+const modalMode = ref<'create' | 'edit'>('create')
+const editableTask = ref<ITask | null>(null)
 
+// ---------- ОТКРЫТЬ МОДАЛКУ ДЛЯ СОЗДАНИЯ ----------
 const openModal = () => {
+  modalMode.value = 'create'
+  editableTask.value = null
   isModalOpen.value = true
 }
 
-const addTask = (title: string) => {
-  console.log('Новая задача:', title)
+// ---------- ОТКРЫТЬ МОДАЛКУ ДЛЯ РЕДАКТИРОВАНИЯ ----------
+const openEdit = (task: ITask) => {
+  modalMode.value = 'edit'
+  editableTask.value = task
+  isModalOpen.value = true
+}
+
+// ---------- ОБРАБОТКА SUBMIT ИЗ МОДАЛКИ ----------
+const handleModalSubmit = async ({
+  title,
+  description,
+}: {
+  title: string
+  description: string
+}) => {
+  if (modalMode.value === 'create') {
+    await createTask(title, description)
+  }
+
+  if (modalMode.value === 'edit' && editableTask.value) {
+    await updateTask(editableTask.value.id, { title, description })
+  }
 }
 </script>
 
@@ -51,18 +84,25 @@ const addTask = (title: string) => {
         {{ error }}
       </div>
       <div v-else-if="!hasTasks" class="todo__state">Задач пока нет</div>
+
       <ul v-else class="todo__list">
-        <li v-for="task in tasks" :key="task.id" class="todo__item">
+        <li
+          v-for="task in tasks"
+          :key="task.id"
+          class="todo__item"
+          :class="{ 'todo__item--completed': task.is_completed === 1 }"
+          @click="openEdit(task)"
+        >
           <span class="todo__item-text">
-            <!-- подставь правильное поле: title / name / text -->
             {{ task.title }}
           </span>
 
-          <div class="todo__item-actions">
+          <div class="todo__item-actions" @click.stop>
             <button
               type="button"
               class="todo__btn todo__btn--complete"
               aria-label="Отметить задачу как выполненную"
+              @click="toggleTaskStatus(task)"
             >
               ✔
             </button>
@@ -79,6 +119,7 @@ const addTask = (title: string) => {
       </ul>
     </section>
 
+    <!-- КНОПКА СОЗДАНИЯ -->
     <button
       @click="openModal"
       type="button"
@@ -87,6 +128,13 @@ const addTask = (title: string) => {
     >
       +
     </button>
-    <TodoModal v-model="isModalOpen" @submit="addTask" />
+
+    <!-- МОДАЛЬНОЕ ОКНО -->
+    <TodoModal
+      v-model="isModalOpen"
+      :mode="modalMode"
+      :task="editableTask"
+      @submit="handleModalSubmit"
+    />
   </main>
 </template>

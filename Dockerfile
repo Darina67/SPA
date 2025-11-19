@@ -17,3 +17,4 @@ COPY src/ /var/www/html/
 WORKDIR /var/www/html/
 # Указываем Apache использовать public как DocumentRoot
 RUN sed -i 's|/var/www/html|/var/www/html/public|g' /etc/apache2/sites-available/000-default.conf
+

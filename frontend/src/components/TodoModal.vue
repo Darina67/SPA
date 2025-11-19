@@ -1,8 +1,11 @@
 <script setup lang="ts">
 import { ref, watch, onBeforeUnmount } from 'vue'
+import type { ITask } from '../types/task'
 
 interface Props {
   modelValue: boolean
+  mode: 'create' | 'edit'
+  task: ITask | null
 }
 
 const props = defineProps<Props>()
@@ -15,12 +18,23 @@ const emit = defineEmits<{
 const title = ref('')
 const description = ref('')
 
-// Закрытие модалки
-const close = () => {
-  emit('update:modelValue', false)
-}
+// Заполняем поля при открытии модалки в режиме редактирования
+watch(
+  () => props.modelValue,
+  (isOpen) => {
+    if (isOpen && props.mode === 'edit' && props.task) {
+      title.value = props.task.title
+      description.value = props.task.description ?? ''
+    }
+    if (isOpen && props.mode === 'create') {
+      title.value = ''
+      description.value = ''
+    }
+  }
+)
 
-// Сабмит
+const close = () => emit('update:modelValue', false)
+
 const submit = () => {
   if (!title.value.trim()) return
 
@@ -29,26 +43,18 @@ const submit = () => {
     description: description.value.trim(),
   })
 
-  title.value = ''
-  description.value = ''
   close()
 }
 
-// Закрытие по ESC
 const handleKey = (e: KeyboardEvent) => {
-  if (e.key === 'Escape') {
-    close()
-  }
+  if (e.key === 'Escape') close()
 }
 
 watch(
   () => props.modelValue,
   (isOpen) => {
-    if (isOpen) {
-      document.addEventListener('keydown', handleKey)
-    } else {
-      document.removeEventListener('keydown', handleKey)
-    }
+    if (isOpen) document.addEventListener('keydown', handleKey)
+    else document.removeEventListener('keydown', handleKey)
   }
 )
 
@@ -78,32 +84,31 @@ onBeforeUnmount(() => {
           &times;
         </button>
 
-        <h2 id="todo-modal-title" class="todo-modal__title">
-          Добавить новую задачу
+        <h2 class="todo-modal__title">
+          {{
+            mode === 'edit' ? 'Редактирование задачи' : 'Добавить новую задачу'
+          }}
         </h2>
 
         <label class="todo-modal__field">
-          <span class="visually-hidden">Текст задачи</span>
           <input
             type="text"
             class="todo-modal__input"
-            placeholder="Введите текст задачи"
-            v-model="inputValue"
-            @keyup.enter="submit"
+            placeholder="Название задачи"
+            v-model="title"
           />
         </label>
+
         <label class="todo-modal__field">
-          <span class="visually-hidden">Описание задачи</span>
           <textarea
             class="todo-modal__textarea"
-            placeholder="Введите описание задачи..."
-            rows="4"
+            placeholder="Описание"
             v-model="description"
           ></textarea>
         </label>
 
         <button type="button" class="todo-modal__submit" @click="submit">
-          Добавить задачу
+          {{ mode === 'edit' ? 'Редактировать задачу' : 'Создать задачу' }}
         </button>
       </div>
     </section>

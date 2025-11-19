@@ -20,6 +20,23 @@ export const useTasks = () => {
       isLoading.value = false
     }
   }
+  const createTask = async (title: string, description = '') => {
+    try {
+      error.value = null
+
+      const newTask = await taskService.createTask({
+        title,
+        description,
+      })
+
+      // Добавляем новую задачу в начало списка
+      tasks.value.unshift(newTask)
+    } catch (err) {
+      console.error('Ошибка при создании задачи', err)
+      error.value = 'Не удалось создать задачу'
+    }
+  }
+
   const deleteTask = async (id: number) => {
     try {
       tasks.value = tasks.value.filter((task) => task.id !== id)
@@ -28,6 +45,38 @@ export const useTasks = () => {
       console.error(err)
       error.value = 'Не удалось удалить задачу'
       await loadTasks()
+    }
+  }
+  const toggleTaskStatus = async (task: ITask) => {
+    try {
+      error.value = null
+
+      const nextCompleted: 0 | 1 = task.is_completed === 1 ? 0 : 1
+
+      const updated = await taskService.updateTask(task.id, {
+        is_completed: nextCompleted,
+      })
+
+      const index = tasks.value.findIndex((t) => t.id === task.id)
+      if (index !== -1) {
+        tasks.value[index] = updated
+      }
+    } catch (err) {
+      console.error('Ошибка при обновлении статуса задачи', err)
+      error.value = 'Не удалось обновить статус задачи'
+    }
+  }
+  const updateTask = async (
+    id: number,
+    payload: { title: string; description: string }
+  ) => {
+    try {
+      const updated = await taskService.updateTask(id, payload)
+
+      const index = tasks.value.findIndex((t) => t.id === id)
+      if (index !== -1) tasks.value[index] = updated
+    } catch (err) {
+      console.error('Ошибка при обновлении', err)
     }
   }
 
@@ -39,5 +88,8 @@ export const useTasks = () => {
     error,
     loadTasks,
     deleteTask,
+    toggleTaskStatus,
+    createTask,
+    updateTask,
   }
 }

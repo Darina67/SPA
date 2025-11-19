@@ -82,7 +82,22 @@ ul {
   display: flex;
   justify-content: space-between;
   align-items: center;
+  cursor: pointer;
 }
+/*выполненная задача*/
+.todo__item--completed {
+  opacity: 0.7;
+
+  .todo__item-text {
+    text-decoration: line-through;
+    color: #999;
+  }
+}
+.todo__item--completed .todo__btn--complete {
+  background-color: #4caf50;
+  color: #fff;
+}
+/*//////////////////////*/
 .todo__item-actions {
   display: flex;
   gap: 17px;

@@ -10,7 +10,7 @@ export interface ICreateTaskPayload {
 export interface IUpdateTaskPayload {
   title?: string
   description?: string
-  status?: ITask['status']
+  is_completed?: ITask['is_completed']
 }
 
 export const taskService = {
