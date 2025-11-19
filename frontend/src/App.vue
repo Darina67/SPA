@@ -4,7 +4,6 @@ import TodoModal from './components/TodoModal.vue'
 import { useTasks } from './composables/useTasks'
 import type { ITask } from './types/task'
 
-// Подключаем логику задач
 const {
   tasks,
   isLoading,
@@ -15,27 +14,56 @@ const {
   updateTask,
 } = useTasks()
 
-// Состояния
-const hasTasks = computed(() => tasks.value.length > 0)
+// фильтр по статусу
+const filterStatus = ref<'all' | 'completed' | 'uncompleted'>('all')
+
+// строка поиска
+const searchQuery = ref('')
+
+// отфильтрованный список задач
+const filteredTasks = computed(() => {
+  const q = searchQuery.value.trim().toLowerCase()
+
+  return tasks.value.filter((task) => {
+    // фильтр по статусу
+    if (filterStatus.value === 'completed' && task.is_completed !== 1) {
+      return false
+    }
+
+    if (filterStatus.value === 'uncompleted' && task.is_completed !== 0) {
+      return false
+    }
+
+    // поиск по названию и описанию
+    if (!q) return true
+
+    const inTitle = task.title.toLowerCase().includes(q)
+    const inDescription = (task.description ?? '').toLowerCase().includes(q)
+
+    return inTitle || inDescription
+  })
+})
+
+const hasAnyTasks = computed(() => tasks.value.length > 0)
+const hasFilteredTasks = computed(() => filteredTasks.value.length > 0)
+
+// модалка
 const isModalOpen = ref(false)
 const modalMode = ref<'create' | 'edit'>('create')
 const editableTask = ref<ITask | null>(null)
 
-// ---------- ОТКРЫТЬ МОДАЛКУ ДЛЯ СОЗДАНИЯ ----------
 const openModal = () => {
   modalMode.value = 'create'
   editableTask.value = null
   isModalOpen.value = true
 }
 
-// ---------- ОТКРЫТЬ МОДАЛКУ ДЛЯ РЕДАКТИРОВАНИЯ ----------
 const openEdit = (task: ITask) => {
   modalMode.value = 'edit'
   editableTask.value = task
   isModalOpen.value = true
 }
 
-// ---------- ОБРАБОТКА SUBMIT ИЗ МОДАЛКИ ----------
 const handleModalSubmit = async ({
   title,
   description,
@@ -66,11 +94,12 @@ const handleModalSubmit = async ({
             type="text"
             class="todo__search-input"
             placeholder="Поиск по задачам..."
+            v-model="searchQuery"
           />
         </label>
 
         <label class="todo__filter">
-          <select class="todo__filter-select">
+          <select class="todo__filter-select" v-model="filterStatus">
             <option value="all">Все</option>
             <option value="completed">Выполнено</option>
             <option value="uncompleted">В ожидании</option>
@@ -78,16 +107,21 @@ const handleModalSubmit = async ({
         </label>
       </div>
 
-      <!-- состояние загрузки / ошибки -->
       <div v-if="isLoading" class="todo__state">Загрузка задач...</div>
+
       <div v-else-if="error" class="todo__state todo__state--error">
         {{ error }}
       </div>
-      <div v-else-if="!hasTasks" class="todo__state">Задач пока нет</div>
+
+      <div v-else-if="!hasAnyTasks" class="todo__state">Задач пока нет</div>
+
+      <div v-else-if="hasAnyTasks && !hasFilteredTasks" class="todo__state">
+        По вашему запросу ничего не найдено
+      </div>
 
       <ul v-else class="todo__list">
         <li
-          v-for="task in tasks"
+          v-for="task in filteredTasks"
           :key="task.id"
           class="todo__item"
           :class="{ 'todo__item--completed': task.is_completed === 1 }"
@@ -119,7 +153,6 @@ const handleModalSubmit = async ({
       </ul>
     </section>
 
-    <!-- КНОПКА СОЗДАНИЯ -->
     <button
       @click="openModal"
       type="button"
@@ -129,7 +162,6 @@ const handleModalSubmit = async ({
       +
     </button>
 
-    <!-- МОДАЛЬНОЕ ОКНО -->
     <TodoModal
       v-model="isModalOpen"
       :mode="modalMode"
